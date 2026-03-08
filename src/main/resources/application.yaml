@@ -13,3 +13,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+
+scheduler:
+  default-job-interval-ms: 30000 # Default time interval for job execution
+  polling-interval-ms: 5000 # Time interval for polling the database for jobs
+  enabled: true
