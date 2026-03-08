@@ -1,4 +1,4 @@
-package com.spring.scheduler.common;
+package com.spring.scheduler.common.job;
 
 /**
  * Job status enumeration. Defines the possible states of a scheduled job, such as idle, running, completed, or failed.

@@ -1,6 +1,7 @@
 package com.spring.scheduler.service.job;
 
 import com.spring.scheduler.domain.job.JobConfig;
+import com.spring.scheduler.jobs.Job;
 import com.spring.scheduler.repository.job.JobConfigRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,9 @@ class JobConfigServiceTest
     @Mock
     private JobConfigRepository jobConfigRepository;
 
+    @Mock
+    private Job job;
+
     @InjectMocks
     private JobConfigService jobConfigService;
 
@@ -44,10 +48,11 @@ class JobConfigServiceTest
      */
     private static Stream<Arguments> provideRegisterInputs()
     {
-        return Stream.of( Arguments.of( "dailyCleanup", "Daily cleanup", DEFAULT_INTERVAL_MILLIS,
-                LocalDateTime.now().plusMinutes( 1 ) ),
-            Arguments.of( "hourlySync", "Hourly sync", HOURLY_INTERVAL_MILLIS, LocalDateTime.now().plusMinutes( 2 ) ),
-            Arguments.of( "nightlyRollup", null, NIGHTLY_INTERVAL_MILLIS, LocalDateTime.now().plusMinutes( 3 ) ) );
+        return Stream.of(
+            Arguments.of( "dailyCleanup", "Daily cleanup", DEFAULT_INTERVAL_MILLIS ),
+            Arguments.of( "hourlySync", "Hourly sync", HOURLY_INTERVAL_MILLIS ),
+            Arguments.of( "nightlyRollup", "Nightly rollup", NIGHTLY_INTERVAL_MILLIS )
+        );
     }
 
     /**
@@ -61,17 +66,23 @@ class JobConfigServiceTest
         final String description = "Daily cleanup";
         final LocalDateTime nextRunTime = LocalDateTime.now();
         final JobConfig existing = new JobConfig( name, description, DEFAULT_INTERVAL_MILLIS, nextRunTime );
+
+        when( job.getJobName() ).thenReturn( name );
+        when( job.getJobDescription() ).thenReturn( description );
+        when( job.getIntervalMs() ).thenReturn( 0L );
         when( jobConfigRepository.findByName( name ) ).thenReturn( Optional.of( existing ) );
 
         // When
-        final boolean result =
-            jobConfigService.registerIfMissing( name, description, DEFAULT_INTERVAL_MILLIS, nextRunTime );
+        final boolean result = jobConfigService.registerIfMissing( job, DEFAULT_INTERVAL_MILLIS, nextRunTime );
 
         // Then
         assertFalse( result );
+        verify( job ).getJobName();
+        verify( job ).getJobDescription();
+        verify( job ).getIntervalMs();
         verify( jobConfigRepository ).findByName( name );
         verify( jobConfigRepository, never() ).save( org.mockito.ArgumentMatchers.any( JobConfig.class ) );
-        verifyNoMoreInteractions( jobConfigRepository );
+        verifyNoMoreInteractions( jobConfigRepository, job );
     }
 
     /**
@@ -83,58 +94,100 @@ class JobConfigServiceTest
         // Given
         final String name = "hourlySync";
         final String description = "Hourly synchronization";
-        final Long intervalMillis = HOURLY_INTERVAL_MILLIS;
+        final Long jobInterval = HOURLY_INTERVAL_MILLIS;
         final LocalDateTime nextRunTime = LocalDateTime.now().plusMinutes( 5 );
+
+        when( job.getJobName() ).thenReturn( name );
+        when( job.getJobDescription() ).thenReturn( description );
+        when( job.getIntervalMs() ).thenReturn( jobInterval );
         when( jobConfigRepository.findByName( name ) ).thenReturn( Optional.empty() );
 
         // When
-        final boolean result = jobConfigService.registerIfMissing( name, description, intervalMillis, nextRunTime );
+        final boolean result = jobConfigService.registerIfMissing( job, DEFAULT_INTERVAL_MILLIS, nextRunTime );
 
         // Then
         assertTrue( result );
         final ArgumentCaptor<JobConfig> captor = ArgumentCaptor.forClass( JobConfig.class );
+        verify( job ).getJobName();
+        verify( job ).getJobDescription();
+        verify( job, atLeast( 1 ) ).getIntervalMs();
         verify( jobConfigRepository ).findByName( name );
         verify( jobConfigRepository ).save( captor.capture() );
-        verifyNoMoreInteractions( jobConfigRepository );
+        verifyNoMoreInteractions( jobConfigRepository, job );
 
         final JobConfig saved = captor.getValue();
         assertEquals( name, saved.getName() );
         assertEquals( description, saved.getDescription() );
-        assertEquals( intervalMillis, saved.getIntervalMillis() );
+        assertEquals( jobInterval, saved.getIntervalMillis() );
         assertEquals( nextRunTime, saved.getNextRunTime() );
     }
 
     /**
-     * Tests registerIfMissing maps multiple valid input combinations into saved entities.
+     * Tests registerIfMissing uses job interval when provided, falls back to default when job returns 0.
      *
-     * @param name           the job name
-     * @param description    the job description
-     * @param intervalMillis the configured interval
-     * @param nextRunTime    the next run timestamp
+     * @param jobName the job name
+     * @param jobDescription the job description
+     * @param jobIntervalMs the job interval
      */
     @ParameterizedTest
     @MethodSource( "provideRegisterInputs" )
-    void testRegisterIfMissingWithValidInputsMapsFieldsCorrectly( final String name, final String description,
-        final Long intervalMillis, final LocalDateTime nextRunTime )
+    void testRegisterIfMissingWithJobIntervalMapsFieldsCorrectly( final String jobName, final String jobDescription,
+        final Long jobIntervalMs )
     {
         // Given
-        when( jobConfigRepository.findByName( name ) ).thenReturn( Optional.empty() );
+        final LocalDateTime nextRunTime = LocalDateTime.now().plusMinutes( 1 );
+
+        when( job.getJobName() ).thenReturn( jobName );
+        when( job.getJobDescription() ).thenReturn( jobDescription );
+        when( job.getIntervalMs() ).thenReturn( jobIntervalMs );
+        when( jobConfigRepository.findByName( jobName ) ).thenReturn( Optional.empty() );
 
         // When
-        final boolean result = jobConfigService.registerIfMissing( name, description, intervalMillis, nextRunTime );
+        final boolean result = jobConfigService.registerIfMissing( job, DEFAULT_INTERVAL_MILLIS, nextRunTime );
 
         // Then
         assertTrue( result );
         final ArgumentCaptor<JobConfig> captor = ArgumentCaptor.forClass( JobConfig.class );
-        verify( jobConfigRepository ).findByName( name );
+        verify( job ).getJobName();
+        verify( job, atLeast( 1 ) ).getJobDescription();
+        verify( job, atLeast( 1 ) ).getIntervalMs();
+        verify( jobConfigRepository ).findByName( jobName );
         verify( jobConfigRepository ).save( captor.capture() );
-        verifyNoMoreInteractions( jobConfigRepository );
+        verifyNoMoreInteractions( jobConfigRepository, job );
 
         final JobConfig saved = captor.getValue();
-        assertEquals( name, saved.getName() );
-        assertEquals( description, saved.getDescription() );
-        assertEquals( intervalMillis, saved.getIntervalMillis() );
+        assertEquals( jobName, saved.getName() );
+        assertEquals( jobDescription, saved.getDescription() );
+        assertEquals( jobIntervalMs, saved.getIntervalMillis() );
         assertEquals( nextRunTime, saved.getNextRunTime() );
+    }
+
+    /**
+     * Tests registerIfMissing falls back to default interval when job returns 0.
+     */
+    @Test
+    void testRegisterIfMissingWithJobReturningZeroIntervalUsesFallback()
+    {
+        // Given
+        final String name = "customJob";
+        final String description = "Custom job";
+        final LocalDateTime nextRunTime = LocalDateTime.now().plusMinutes( 1 );
+
+        when( job.getJobName() ).thenReturn( name );
+        when( job.getJobDescription() ).thenReturn( description );
+        when( job.getIntervalMs() ).thenReturn( 0L );
+        when( jobConfigRepository.findByName( name ) ).thenReturn( Optional.empty() );
+
+        // When
+        final boolean result = jobConfigService.registerIfMissing( job, DEFAULT_INTERVAL_MILLIS, nextRunTime );
+
+        // Then
+        assertTrue( result );
+        final ArgumentCaptor<JobConfig> captor = ArgumentCaptor.forClass( JobConfig.class );
+        verify( jobConfigRepository ).save( captor.capture() );
+
+        final JobConfig saved = captor.getValue();
+        assertEquals( DEFAULT_INTERVAL_MILLIS, saved.getIntervalMillis(), "Should use default when job interval is 0" );
     }
 
     /**
@@ -146,17 +199,22 @@ class JobConfigServiceTest
         // Given
         final String name = "brokenJob";
         final RuntimeException expected = new RuntimeException( "lookup failed" );
+
+        when( job.getJobName() ).thenReturn( name );
+        when( job.getJobDescription() ).thenReturn( "desc" );
+        when( job.getIntervalMs() ).thenReturn( 0L );
         when( jobConfigRepository.findByName( name ) ).thenThrow( expected );
 
         // When
-        final RuntimeException actual = assertThrows( RuntimeException.class,
-            () -> jobConfigService.registerIfMissing( name, "desc", DEFAULT_INTERVAL_MILLIS, LocalDateTime.now() ) );
+        final RuntimeException actual =
+            assertThrows( RuntimeException.class,
+                () -> jobConfigService.registerIfMissing( job, DEFAULT_INTERVAL_MILLIS, LocalDateTime.now() ) );
 
         // Then
         assertSame( expected, actual );
         verify( jobConfigRepository ).findByName( name );
         verify( jobConfigRepository, never() ).save( org.mockito.ArgumentMatchers.any( JobConfig.class ) );
-        verifyNoMoreInteractions( jobConfigRepository );
+        verifyNoMoreInteractions( jobConfigRepository, job );
     }
 
     /**
@@ -167,15 +225,19 @@ class JobConfigServiceTest
     {
         // Given
         final String name = "saveFailureJob";
-        final String description = "save failure";
         final LocalDateTime nextRunTime = LocalDateTime.now().plusMinutes( 1 );
         final RuntimeException expected = new RuntimeException( "save failed" );
+
+        when( job.getJobName() ).thenReturn( name );
+        when( job.getJobDescription() ).thenReturn( "save failure" );
+        when( job.getIntervalMs() ).thenReturn( 0L );
         when( jobConfigRepository.findByName( name ) ).thenReturn( Optional.empty() );
         when( jobConfigRepository.save( org.mockito.ArgumentMatchers.any( JobConfig.class ) ) ).thenThrow( expected );
 
         // When
-        final RuntimeException actual = assertThrows( RuntimeException.class,
-            () -> jobConfigService.registerIfMissing( name, description, DEFAULT_INTERVAL_MILLIS, nextRunTime ) );
+        final RuntimeException actual =
+            assertThrows( RuntimeException.class,
+                () -> jobConfigService.registerIfMissing( job, DEFAULT_INTERVAL_MILLIS, nextRunTime ) );
 
         // Then
         assertSame( expected, actual );

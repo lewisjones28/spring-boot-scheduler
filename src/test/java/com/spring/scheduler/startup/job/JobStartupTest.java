@@ -1,6 +1,6 @@
-package com.spring.scheduler.startup;
+package com.spring.scheduler.startup.job;
 
-import com.spring.scheduler.job.Job;
+import com.spring.scheduler.jobs.Job;
 import com.spring.scheduler.service.job.JobConfigService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +18,11 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * {@link JobStartup} unit tests.
@@ -75,13 +79,10 @@ class JobStartupTest
     void testOnApplicationEventWithSingleJobDelegatesRegistration( final boolean created )
     {
         // Given
-        final String jobName = "dailyCleanup";
-        final String jobDescription = "Daily cleanup job";
         final JobStartup jobStartup = createStartup( List.of( jobOne ) );
 
-        when( jobOne.getJobName() ).thenReturn( jobName );
-        when( jobOne.getJobDescription() ).thenReturn( jobDescription );
-        when( jobConfigService.registerIfMissing( eq( jobName ), eq( jobDescription ), eq( DEFAULT_INTERVAL_MILLIS ),
+        when( jobOne.getJobName() ).thenReturn( "dailyCleanup" );
+        when( jobConfigService.registerIfMissing( eq( jobOne ), eq( DEFAULT_INTERVAL_MILLIS ),
             any( LocalDateTime.class ) ) ).thenReturn( created );
 
         // When
@@ -89,9 +90,8 @@ class JobStartupTest
 
         // Then
         verify( jobOne ).getJobName();
-        verify( jobOne ).getJobDescription();
-        verify( jobConfigService ).registerIfMissing( eq( jobName ), eq( jobDescription ),
-            eq( DEFAULT_INTERVAL_MILLIS ), any( LocalDateTime.class ) );
+        verify( jobConfigService ).registerIfMissing( eq( jobOne ), eq( DEFAULT_INTERVAL_MILLIS ),
+            any( LocalDateTime.class ) );
         verifyNoMoreInteractions( jobConfigService, jobOne );
     }
 
@@ -102,34 +102,26 @@ class JobStartupTest
     void testOnApplicationEventWithMultipleJobsDelegatesRegistrationForEachJob()
     {
         // Given
-        final String jobOneName = "dailyCleanup";
-        final String jobOneDescription = "Daily cleanup job";
-        final String jobTwoName = "hourlySync";
-        final String jobTwoDescription = "Hourly sync job";
         final JobStartup jobStartup = createStartup( List.of( jobOne, jobTwo ) );
 
-        when( jobOne.getJobName() ).thenReturn( jobOneName );
-        when( jobOne.getJobDescription() ).thenReturn( jobOneDescription );
-        when( jobTwo.getJobName() ).thenReturn( jobTwoName );
-        when( jobTwo.getJobDescription() ).thenReturn( jobTwoDescription );
+        when( jobOne.getJobName() ).thenReturn( "dailyCleanup" );
+        when( jobTwo.getJobName() ).thenReturn( "hourlySync" );
 
-        when( jobConfigService.registerIfMissing( eq( jobOneName ), eq( jobOneDescription ),
-            eq( DEFAULT_INTERVAL_MILLIS ), any( LocalDateTime.class ) ) ).thenReturn( Boolean.TRUE );
-        when( jobConfigService.registerIfMissing( eq( jobTwoName ), eq( jobTwoDescription ),
-            eq( DEFAULT_INTERVAL_MILLIS ), any( LocalDateTime.class ) ) ).thenReturn( Boolean.FALSE );
+        when( jobConfigService.registerIfMissing( eq( jobOne ), eq( DEFAULT_INTERVAL_MILLIS ),
+            any( LocalDateTime.class ) ) ).thenReturn( Boolean.TRUE );
+        when( jobConfigService.registerIfMissing( eq( jobTwo ), eq( DEFAULT_INTERVAL_MILLIS ),
+            any( LocalDateTime.class ) ) ).thenReturn( Boolean.FALSE );
 
         // When
         jobStartup.onApplicationEvent( null );
 
         // Then
         verify( jobOne ).getJobName();
-        verify( jobOne ).getJobDescription();
         verify( jobTwo ).getJobName();
-        verify( jobTwo ).getJobDescription();
-        verify( jobConfigService ).registerIfMissing( eq( jobOneName ), eq( jobOneDescription ),
-            eq( DEFAULT_INTERVAL_MILLIS ), any( LocalDateTime.class ) );
-        verify( jobConfigService ).registerIfMissing( eq( jobTwoName ), eq( jobTwoDescription ),
-            eq( DEFAULT_INTERVAL_MILLIS ), any( LocalDateTime.class ) );
+        verify( jobConfigService ).registerIfMissing( eq( jobOne ), eq( DEFAULT_INTERVAL_MILLIS ),
+            any( LocalDateTime.class ) );
+        verify( jobConfigService ).registerIfMissing( eq( jobTwo ), eq( DEFAULT_INTERVAL_MILLIS ),
+            any( LocalDateTime.class ) );
         verifyNoMoreInteractions( jobConfigService, jobOne, jobTwo );
     }
 
@@ -140,14 +132,11 @@ class JobStartupTest
     void testOnApplicationEventWithServiceExceptionThrows()
     {
         // Given
-        final String jobName = "dailyCleanup";
-        final String jobDescription = "Daily cleanup job";
         final RuntimeException expected = new RuntimeException( "database unavailable" );
         final JobStartup jobStartup = createStartup( List.of( jobOne ) );
 
-        when( jobOne.getJobName() ).thenReturn( jobName );
-        when( jobOne.getJobDescription() ).thenReturn( jobDescription );
-        when( jobConfigService.registerIfMissing( eq( jobName ), eq( jobDescription ), eq( DEFAULT_INTERVAL_MILLIS ),
+        when( jobOne.getJobName() ).thenReturn( "dailyCleanup" );
+        when( jobConfigService.registerIfMissing( eq( jobOne ), eq( DEFAULT_INTERVAL_MILLIS ),
             any( LocalDateTime.class ) ) ).thenThrow( expected );
 
         // When
@@ -157,9 +146,8 @@ class JobStartupTest
         // Then
         org.junit.jupiter.api.Assertions.assertSame( expected, actual );
         verify( jobOne ).getJobName();
-        verify( jobOne ).getJobDescription();
-        verify( jobConfigService, times( 1 ) ).registerIfMissing( eq( jobName ), eq( jobDescription ),
-            eq( DEFAULT_INTERVAL_MILLIS ), any( LocalDateTime.class ) );
+        verify( jobConfigService, times( 1 ) ).registerIfMissing( eq( jobOne ), eq( DEFAULT_INTERVAL_MILLIS ),
+            any( LocalDateTime.class ) );
         verifyNoMoreInteractions( jobConfigService, jobOne );
     }
 
@@ -175,5 +163,5 @@ class JobStartupTest
         ReflectionTestUtils.setField( jobStartup, "defaultIntervalMillis", DEFAULT_INTERVAL_MILLIS );
         return jobStartup;
     }
-
 }
+

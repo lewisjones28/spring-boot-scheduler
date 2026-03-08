@@ -1,6 +1,6 @@
 package com.spring.scheduler.domain.job;
 
-import com.spring.scheduler.common.JobStatus;
+import com.spring.scheduler.common.job.JobStatus;
 import com.spring.scheduler.domain.Auditable;
 import jakarta.persistence.*;
 import lombok.*;
@@ -47,7 +47,7 @@ public class JobConfig extends Auditable
     private Long intervalMillis;
 
     @Column( nullable = false )
-    private boolean enabled = false;
+    private boolean enabled = Boolean.TRUE;
 
     /**
      * Constructor for creating a new scheduled job configuration.

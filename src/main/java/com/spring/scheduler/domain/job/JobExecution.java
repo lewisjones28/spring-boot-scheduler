@@ -1,6 +1,6 @@
 package com.spring.scheduler.domain.job;
 
-import com.spring.scheduler.common.ExecutionStatus;
+import com.spring.scheduler.common.job.JobExecutionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,7 +32,7 @@ public class JobExecution
 
     @Enumerated( EnumType.STRING )
     @Column( nullable = false )
-    private ExecutionStatus status;
+    private JobExecutionStatus status;
 
     @EqualsAndHashCode.Include
     @Column( name = "started_at", nullable = false )
@@ -62,7 +62,7 @@ public class JobExecution
         this.job = job;
         this.startedAt = startedAt;
         this.executedBy = executedBy;
-        this.status = ExecutionStatus.RUNNING;
+        this.status = JobExecutionStatus.RUNNING;
     }
 
 }

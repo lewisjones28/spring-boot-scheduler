@@ -1,6 +1,6 @@
 package com.spring.scheduler.domain.job;
 
-import com.spring.scheduler.common.JobStatus;
+import com.spring.scheduler.common.job.JobStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -202,7 +202,7 @@ class JobConfigTest
         assertEquals( intervalMillis, config.getIntervalMillis(), "Interval should match" );
         assertEquals( nextRunTime, config.getNextRunTime(), "Next run time should match" );
         assertEquals( JobStatus.IDLE, config.getStatus(), "Default status should be IDLE" );
-        assertFalse( config.isEnabled(), "Default enabled should be false" );
+        assertTrue( config.isEnabled(), "Default enabled should be true" );
     }
 
     /**

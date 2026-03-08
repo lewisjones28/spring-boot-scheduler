@@ -1,6 +1,6 @@
 package com.spring.scheduler.domain.job;
 
-import com.spring.scheduler.common.ExecutionStatus;
+import com.spring.scheduler.common.job.JobExecutionStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -247,7 +247,7 @@ class JobExecutionTest
         assertEquals( job, execution.getJob(), "Job should match" );
         assertEquals( startedAt, execution.getStartedAt(), "StartedAt should match" );
         assertEquals( executedBy, execution.getExecutedBy(), "ExecutedBy should match" );
-        assertEquals( ExecutionStatus.RUNNING, execution.getStatus(), "Default status should be RUNNING" );
+        assertEquals( JobExecutionStatus.RUNNING, execution.getStatus(), "Default status should be RUNNING" );
         assertNull( execution.getCompletedAt(), "CompletedAt should be null initially" );
         assertNull( execution.getErrorMessage(), "ErrorMessage should be null initially" );
         assertNull( execution.getErrorStacktrace(), "ErrorStacktrace should be null initially" );
@@ -263,7 +263,7 @@ class JobExecutionTest
         final JobExecution execution = createJobExecution( createJobConfig( "test-job" ), LocalDateTime.now() );
         final Long id = 456L;
         final JobConfig newJob = createJobConfig( "new-job" );
-        final ExecutionStatus newStatus = ExecutionStatus.SUCCESS;
+        final JobExecutionStatus newStatus = JobExecutionStatus.SUCCESS;
         final LocalDateTime newStartedAt = LocalDateTime.now().minusHours( 1 );
         final LocalDateTime newCompletedAt = LocalDateTime.now();
         final String errorMessage = "Test error";
@@ -303,11 +303,11 @@ class JobExecutionTest
         final JobExecution execution = new JobExecution( job, startedAt, "pod-123" );
 
         // When - simulate successful execution
-        execution.setStatus( ExecutionStatus.SUCCESS );
+        execution.setStatus( JobExecutionStatus.SUCCESS );
         execution.setCompletedAt( LocalDateTime.now() );
 
         // Then
-        assertEquals( ExecutionStatus.SUCCESS, execution.getStatus(), "Status should be SUCCESS" );
+        assertEquals( JobExecutionStatus.SUCCESS, execution.getStatus(), "Status should be SUCCESS" );
         assertNotNull( execution.getCompletedAt(), "CompletedAt should be set" );
         assertNull( execution.getErrorMessage(), "ErrorMessage should remain null" );
         assertNull( execution.getErrorStacktrace(), "ErrorStacktrace should remain null" );
@@ -327,13 +327,13 @@ class JobExecutionTest
         final String errorStacktrace = "java.sql.SQLException at...";
 
         // When - simulate failed execution
-        execution.setStatus( ExecutionStatus.FAILED );
+        execution.setStatus( JobExecutionStatus.FAILED );
         execution.setCompletedAt( LocalDateTime.now() );
         execution.setErrorMessage( errorMessage );
         execution.setErrorStacktrace( errorStacktrace );
 
         // Then
-        assertEquals( ExecutionStatus.FAILED, execution.getStatus(), "Status should be FAILED" );
+        assertEquals( JobExecutionStatus.FAILED, execution.getStatus(), "Status should be FAILED" );
         assertNotNull( execution.getCompletedAt(), "CompletedAt should be set" );
         assertEquals( errorMessage, execution.getErrorMessage(), "ErrorMessage should be set" );
         assertEquals( errorStacktrace, execution.getErrorStacktrace(), "ErrorStacktrace should be set" );
@@ -351,15 +351,15 @@ class JobExecutionTest
 
         final JobExecution execution1 = createJobExecution( job, startedAt );
         execution1.setId( 1L );
-        execution1.setStatus( ExecutionStatus.RUNNING );
+        execution1.setStatus( JobExecutionStatus.RUNNING );
 
         final JobExecution execution2 = createJobExecution( job, startedAt );
         execution2.setId( DIFFERENT_EXECUTION_ID );
-        execution2.setStatus( ExecutionStatus.SUCCESS );
+        execution2.setStatus( JobExecutionStatus.SUCCESS );
         execution2.setCompletedAt( LocalDateTime.now() );
 
         final JobExecution execution3 = createJobExecution( job, startedAt );
-        execution3.setStatus( ExecutionStatus.FAILED );
+        execution3.setStatus( JobExecutionStatus.FAILED );
         execution3.setErrorMessage( "Test error" );
         execution3.setErrorStacktrace( "Stack trace" );
         execution3.setExecutedBy( "different-pod" );

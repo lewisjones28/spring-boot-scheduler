@@ -1,6 +1,6 @@
-package com.spring.scheduler.startup;
+package com.spring.scheduler.startup.job;
 
-import com.spring.scheduler.job.Job;
+import com.spring.scheduler.jobs.Job;
 import com.spring.scheduler.service.job.JobConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +23,7 @@ public class JobStartup implements ApplicationListener<ApplicationReadyEvent>
 {
     private final List<Job> jobs;
     private final JobConfigService jobConfigService;
-    @Value( "${scheduler.interval-ms:86400000}" )
+    @Value( "${scheduler.default-job-interval-ms:86400000}" )
     private Long defaultIntervalMillis;
 
     /**
@@ -54,7 +54,7 @@ public class JobStartup implements ApplicationListener<ApplicationReadyEvent>
             log.debug( "Processing scheduled job: {}", jobName );
 
             final boolean created =
-                jobConfigService.registerIfMissing( jobName, job.getJobDescription(), defaultIntervalMillis,
+                jobConfigService.registerIfMissing( job, defaultIntervalMillis,
                     LocalDateTime.now() );
 
             if ( !created )

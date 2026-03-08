@@ -2,6 +2,7 @@ package com.spring.scheduler;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Spring Boot Scheduler Application. This application demonstrates how to use Spring's scheduling
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author lewisjones
  */
 @SpringBootApplication
+@EnableScheduling
 public class SpringBootSchedulerApplication
 {
 
