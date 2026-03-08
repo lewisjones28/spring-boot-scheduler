@@ -36,7 +36,18 @@ public class JobTask
     public JobTask( final JobService jobService, final List<Job> jobs )
     {
         this.jobService = jobService;
-        this.jobRegistry = jobs.stream().collect( Collectors.toMap( Job::getJobName, Function.identity() ) );
+        this.jobRegistry = jobs.stream().collect(
+                Collectors.toMap(
+                        Job::getJobName,
+                        Function.identity(),
+                        ( existing, duplicate ) -> {
+                            throw new IllegalStateException(
+                                    "Duplicate job name detected while building jobRegistry: "
+                                            + existing.getJobName()
+                            );
+                        }
+                )
+        );
         log.info( "JobTask initialized with {} registered jobs: {}", jobRegistry.size(), jobRegistry.keySet() );
     }
 
