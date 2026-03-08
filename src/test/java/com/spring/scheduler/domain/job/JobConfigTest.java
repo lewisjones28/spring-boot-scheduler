@@ -202,7 +202,7 @@ class JobConfigTest
         assertEquals( intervalMillis, config.getIntervalMillis(), "Interval should match" );
         assertEquals( nextRunTime, config.getNextRunTime(), "Next run time should match" );
         assertEquals( JobStatus.IDLE, config.getStatus(), "Default status should be IDLE" );
-        assertFalse( config.isEnabled(), "Default enabled should be false" );
+        assertTrue( config.isEnabled(), "Default enabled should be true" );
     }
 
     /**

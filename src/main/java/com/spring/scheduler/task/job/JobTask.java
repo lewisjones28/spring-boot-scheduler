@@ -98,7 +98,9 @@ public class JobTask
         if ( job == null )
         {
             log.error( "No job implementation found for job name [{}]", jobName );
-            throw new JobExecutionException( "No job implementation found for job: " + jobName );
+            jobService.markJobFailed( jobName,
+                new JobExecutionException( "No job implementation found for job: " + jobName ), execution );
+            return;
         }
 
         // Execute the job
@@ -109,12 +111,21 @@ public class JobTask
             job.onSuccess();
             jobService.markJobCompleted( jobName, execution );
         }
-        catch ( final Exception e )
+        catch ( final Exception executionError )
         {
-            log.error( "Job [{}] execution failed with error: {}", jobName, e.getMessage(), e );
-            job.onFailure( e );
-            jobService.markJobFailed( jobName, e, execution );
-            // JobService.markJobFailed throws JobExecutionException, let it propagate
+            log.error( "Job [{}] execution failed with error: {}", jobName, executionError.getMessage(),
+                executionError );
+
+            try
+            {
+                job.onFailure( executionError );
+            }
+            catch ( final Exception callbackError )
+            {
+                log.error( "Job [{}] onFailure callback failed: {}", jobName, callbackError.getMessage(),
+                    callbackError );
+            }
+            jobService.markJobFailed( jobName, executionError, execution );
         }
     }
 }

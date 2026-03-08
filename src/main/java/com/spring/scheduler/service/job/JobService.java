@@ -176,10 +176,6 @@ public class JobService
             execution.setErrorStacktrace( error != null ? stackTraceFor( error ) : null );
             jobExecutionService.save( execution );
         }
-
-        throw new JobExecutionException(
-            "Scheduled job [" + jobName + "] failed with error: " + ( error != null ? error.getMessage() : null ),
-            error );
     }
 
     /**

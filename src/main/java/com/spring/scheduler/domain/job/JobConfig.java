@@ -47,7 +47,7 @@ public class JobConfig extends Auditable
     private Long intervalMillis;
 
     @Column( nullable = false )
-    private boolean enabled = false;
+    private boolean enabled = Boolean.TRUE;
 
     /**
      * Constructor for creating a new scheduled job configuration.

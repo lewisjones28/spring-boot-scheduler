@@ -12,3 +12,6 @@ logging:
   level:
     com.spring.scheduler: DEBUG
 
+scheduler:
+  default-job-interval-ms: 10000 # Default time interval for job execution
+  polling-interval-ms: 5000 # Time interval for polling the database for jobs

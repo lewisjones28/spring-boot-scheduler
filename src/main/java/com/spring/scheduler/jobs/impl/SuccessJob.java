@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SuccessJob implements Job
 {
-    private static final String JOB_NAME = "successJob";
+    private static final String JOB_NAME = "success-job";
     private static final String JOB_DESCRIPTION = "A job that executes successfully and logs a message";
 
     /**

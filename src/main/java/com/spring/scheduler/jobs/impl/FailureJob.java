@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class FailureJob implements Job
 {
-    private static final String JOB_NAME = "failureJob";
+    private static final String JOB_NAME = "failure-job";
     private static final String JOB_DESCRIPTION = "A job that intentionally fails to demonstrate error handling";
 
     /**
