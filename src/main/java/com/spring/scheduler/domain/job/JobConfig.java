@@ -1,6 +1,6 @@
 package com.spring.scheduler.domain.job;
 
-import com.spring.scheduler.common.JobStatus;
+import com.spring.scheduler.common.job.JobStatus;
 import com.spring.scheduler.domain.Auditable;
 import jakarta.persistence.*;
 import lombok.*;

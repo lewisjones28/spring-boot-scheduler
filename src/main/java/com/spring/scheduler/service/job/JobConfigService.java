@@ -1,7 +1,10 @@
 package com.spring.scheduler.service.job;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
+import com.spring.scheduler.common.job.JobStatus;
 import com.spring.scheduler.domain.job.JobConfig;
 import com.spring.scheduler.repository.job.JobConfigRepository;
 import org.springframework.stereotype.Service;
@@ -40,14 +43,63 @@ public class JobConfigService
     public boolean registerIfMissing( final String name, final String description,
         final Long intervalMillis, final LocalDateTime nextRunTime )
     {
-        final var existing = jobConfigRepository.findByName( name );
+        final var existing = findByName( name );
         if ( existing.isPresent() )
         {
             return Boolean.FALSE;
         }
 
         final JobConfig newJob = new JobConfig( name, description, intervalMillis, nextRunTime );
-        jobConfigRepository.save( newJob );
+        save( newJob );
         return Boolean.TRUE;
+    }
+
+    /**
+     * Finds a job configuration by name.
+     *
+     * @param name job name
+     * @return matching configuration if present
+     */
+    @Transactional( readOnly = true )
+    public Optional<JobConfig> findByName( final String name )
+    {
+        return jobConfigRepository.findByName( name );
+    }
+
+    /**
+     * Finds jobs that are currently due for execution.
+     *
+     * @return due jobs
+     */
+    @Transactional( readOnly = true )
+    public List<JobConfig> findJobsDueToRun()
+    {
+        return jobConfigRepository.findJobsDueToRun( LocalDateTime.now(), JobStatus.IDLE );
+    }
+
+    /**
+     * Attempts to claim a due job for execution.
+     *
+     * @param jobName job name
+     * @return true when claim succeeds
+     */
+    @Transactional
+    public boolean claimJob( final String jobName )
+    {
+        final int updated =
+            jobConfigRepository.claimJob( jobName, LocalDateTime.now(), JobStatus.IDLE, JobStatus.RUNNING );
+        return updated > 0;
+    }
+
+    /**
+     * Persists a job configuration.
+     *
+     * @param jobConfig configuration to save
+     * @return saved entity
+     */
+    @Transactional
+    public JobConfig save( final JobConfig jobConfig )
+    {
+        return jobConfigRepository.save( jobConfig );
     }
 }

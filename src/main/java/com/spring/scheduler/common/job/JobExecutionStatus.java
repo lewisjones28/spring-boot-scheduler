@@ -1,11 +1,11 @@
-package com.spring.scheduler.common;
+package com.spring.scheduler.common.job;
 
 /**
  * Execution status values. Defines the possible states of a job execution, such as running, success, or failed.
  *
  * @author lewisjones
  */
-public enum ExecutionStatus
+public enum JobExecutionStatus
 {
 
     /**

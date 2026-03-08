@@ -1,4 +1,4 @@
-package com.spring.scheduler.startup;
+package com.spring.scheduler.startup.job;
 
 import com.spring.scheduler.job.Job;
 import com.spring.scheduler.service.job.JobConfigService;
