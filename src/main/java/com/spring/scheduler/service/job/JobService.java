@@ -1,4 +1,3 @@
-// CSOFF: RegexpSinglelineJava
 package com.spring.scheduler.service.job;
 
 import com.spring.scheduler.common.job.JobExecutionStatus;
